@@ -10,23 +10,23 @@ fi
 compose=$(echo "$PLUGIN_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n
 
 #把stack name转为小写
-stack=$(echo "$PLUGIN_STACKNAME" | tr 'A-Z' 'a-z') #ToLowerCase
+stack=$(echo "$PLUGIN_STACKNAME" | tr [:upper:] [:lower:]) #ToLowerCase
 
 #请求/api/auth 进行身份验证  获取token
-echo 'get token  : '${PLUGIN_SERVERURL}'/api/auth'
-Token_Result=$(curl --location --request POST ''${PLUGIN_SERVERURL}'/api/auth' \
+echo "get token  : '$PLUGIN_SERVERURL'/api/auth"
+Token_Result=$(curl --location --request POST ''$PLUGIN_SERVERURL'/api/auth' \
 --data-raw '{"Username":"'$PLUGIN_USERNAME'", "Password":"'$PLUGIN_PASSWORD'"}')
 # Token_Result = {"jwt":"xxxxxxxx"}
 #todo: get token failed  exit 1
 token=$(echo $Token_Result | jq -r '.jwt')
-if [ -z token ]; then
+if [ $token = 'null' ]; then
   echo 'Authorization failed'
-  echo Token_Result
+  echo "$Token_Result"
   exit 1
 fi
 #get stacks
 echo
-echo 'get statcks :  '${PLUGIN_SERVERURL}'/api/stacks'
+echo 'get statcks :  '$PLUGIN_SERVERURL'/api/stacks'
 #请求/api/stacks 查询stack列表
 stacks=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks' \
 --header 'Authorization: Bearer '$token'')
@@ -35,11 +35,11 @@ echo "stacks: $stacks"
 length=$(echo $stacks | jq '.|length')
 echo "length: $length"
 #如果长度大于0
-if [ length > 0  ]; then
+if [ $length -gt 0  ]; then
   #查找同名stack
   stackId=$(echo $stacks | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
-  if [ stackId > 0 ]; then
+  if [ $stackId -gt 0 ]; then
  #find the stack id, and delete it
     echo
     echo 'update stack id='$stackId''

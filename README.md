@@ -1,4 +1,4 @@
-https://img.shields.io/docker/pulls/lginc/drone-portainer.svg
+[![docker pull](https://img.shields.io/docker/pulls/lginc/drone-portainer.svg)]
 
 # drone-portainer
  plugin of drone continuous deployment to portainer

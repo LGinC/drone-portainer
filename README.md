@@ -1,8 +1,6 @@
-[![docker pull](https://img.shields.io/docker/pulls/lginc/drone-portainer.svg)]
-
 # drone-portainer
  plugin of drone continuous deployment to portainer
-
+![docker pull](https://img.shields.io/docker/pulls/lginc/drone-portainer.svg)
 The drone plugin can be used to deploy a Docker image to a Drone environment.The below pipeline configuration demonstrates simple usage:
 
 ```yaml
@@ -41,7 +39,7 @@ endpointId
 : portainer endpoint id,default 1, localhost is 1 <br> portainer终结点id，默认是1,即第一个，一般为localhost
 
 stackname
-: name of stack, show in stack list <br> 服务栈的名称，会在stacks列表里显示
+: name of stack, show in stack list <br> 服务栈的名称，会在stacks列表里显
 
 imagename
 : name of pull image, like: mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine <br> 将会进行拉取镜像的镜像名 如:mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine

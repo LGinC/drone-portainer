@@ -19,7 +19,7 @@ Token_Result=$(curl --location --request POST ''${PLUGIN_SERVERURL}'/api/auth' \
 # Token_Result = {"jwt":"xxxxxxxx"}
 #todo: get token failed  exit 1
 token=$(echo $Token_Result | jq -r '.jwt')
-if [ -z token ] ; then
+if [ -z token ]; then
   echo 'Authorization failed'
   echo Token_Result
   exit 1

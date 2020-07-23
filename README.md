@@ -1,7 +1,7 @@
 # drone-portainer
-![docker pull](https://img.shields.io/docker/pulls/lginc/drone-portainer.svg)
-plugin of drone continuous deployment to portainer
-The drone plugin can be used to deploy a Docker image to a Drone environment.The below pipeline configuration demonstrates simple usage:
+[![Docker Pulls](https://img.shields.io/docker/pulls/lginc/drone-portainer.svg)](https://hub.docker.com/r/lginc/drone-portainer/)
++ plugin of drone continuous deployment to portainer
++ The drone plugin can be used to deploy a Docker image to a Drone environment.The below pipeline configuration demonstrates simple usage:
 
 ```yaml
 steps:

@@ -23,7 +23,7 @@ if [ -z token ]; then
   echo 'Authorization failed'
   echo Token_Result
   exit 1
-if
+fi
 #get stacks
 echo
 echo 'get statcks :  '${PLUGIN_SERVERURL}'/api/stacks'

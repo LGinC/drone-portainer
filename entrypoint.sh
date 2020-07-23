@@ -4,7 +4,7 @@ set -e
 
 # set default endpointid=1
 if [ -z "$PLUGIN_ENDPOINTID" ]; then
- $PLUGIN_ENDPOINTID=1
+ PLUGIN_ENDPOINTID=1
 fi
 
 compose=$(echo "$PLUGIN_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n

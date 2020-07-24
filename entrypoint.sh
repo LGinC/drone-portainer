@@ -3,21 +3,19 @@
 set -e
 
 # set default endpointid=1
-if [ -z "$DRONE_ENDPOINTID" ]; then
- DRONE_ENDPOINTID=1
+if [ -z "$PLUGIN_ENDPOINTID" ]; then
+ PLUGIN_ENDPOINTID=1
 fi
 
-compose=$(echo "$DRONE_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n
-#compose="$DRONE_DOCKER_COMPOSE"
-echo "compose:            $compose"
-#compose="$DRONE_DOCKER_COMPOSE"
+compose=$(echo "$PLUGIN_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n
+#compose="$PLUGIN_DOCKER_COMPOSE"
 #把stack name转为小写
-stack=$(echo "$DRONE_STACKNAME" | tr "[:upper:]" "[:lower:]") #ToLowerCase
+stack=$(echo "$PLUGIN_STACKNAME" | tr "[:upper:]" "[:lower:]") #ToLowerCase
 
 #请求/api/auth 进行身份验证  获取token
-echo "get token  : $DRONE_SERVERURL/api/auth"
-Token_Result=$(curl --location --request POST ''$DRONE_SERVERURL'/api/auth' \
---data-raw '{"Username":"'$DRONE_USERNAME'", "Password":"'$DRONE_PASSWORD'"}')
+echo "get token  : $PLUGIN_SERVERURL/api/auth"
+Token_Result=$(curl --location --request POST ''$PLUGIN_SERVERURL'/api/auth' \
+--data-raw '{"Username":"'$PLUGIN_USERNAME'", "Password":"'$PLUGIN_PASSWORD'"}')
 # Token_Result = {"jwt":"xxxxxxxx"}
 #todo: get token failed  exit 1
 token=$(echo "$Token_Result" | jq -r '.jwt')
@@ -31,15 +29,15 @@ fi
 
 #pull image  
 #拉取镜像
-echo "pull image: $DRONE_IMAGENAME"
-registry=$(echo "$DRONE_IMAGENAME" | awk -F'/' '{print $1}')
+echo "pull image: $PLUGIN_IMAGENAME"
+registry=$(echo "$PLUGIN_IMAGENAME" | awk -F'/' '{print $1}')
 if [[ "$registry" =~ "." ]]
 then
     base64Registry=$(echo "{\"serveraddress\":\"$registry\"}" | base64)
-    curl --location --request POST ''${DRONE_SERVERURL}'/api/endpoints/'$DRONE_ENDPOINTID'/docker/images/create?fromImage='$DRONE_IMAGENAME'' \
+    curl --location --request POST ''${PLUGIN_SERVERURL}'/api/endpoints/'$PLUGIN_ENDPOINTID'/docker/images/create?fromImage='$PLUGIN_IMAGENAME'' \
     -H "Authorization: Bearer $token"  -H "X-Registry-Auth: $base64Registry"
 else
-    curl --location --request POST ''${DRONE_SERVERURL}'/api/endpoints/'$DRONE_ENDPOINTID'/docker/images/create?fromImage='$DRONE_IMAGENAME'' \
+    curl --location --request POST ''${PLUGIN_SERVERURL}'/api/endpoints/'$PLUGIN_ENDPOINTID'/docker/images/create?fromImage='$PLUGIN_IMAGENAME'' \
     -H "Authorization: Bearer $token"
 fi
 
@@ -49,9 +47,9 @@ fi
 
 #get stacks
 echo
-echo "get statcks :  $DRONE_SERVERURL/api/stacks"
+echo "get statcks :  $PLUGIN_SERVERURL/api/stacks"
 #请求/api/stacks 查询stack列表
-stacks=$(curl --location --request GET ''${DRONE_SERVERURL}'/api/stacks' \
+stacks=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks' \
 --header 'Authorization: Bearer '$token'')
 echo "stacks: $stacks"
 #获取stack列表长度，如果为空则长度为0
@@ -60,7 +58,7 @@ echo "length: $length"
 #如果长度大于0
 if [ $length -gt 0  ]; then
   #查找同名stack
-  stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of DRONE_STACKNAME
+  stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
   if [ $stackId -gt 0 ]; then
  #find the stack id, and delete it
@@ -69,7 +67,7 @@ if [ $length -gt 0  ]; then
     #找到同名stack，更新stack
     # update_content=$(jq -n -c -M --arg content "$compose" --arg id $stackId '{"id": $id, "StackFileContent": $content}')
     update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
-    update_result=$(curl --location --request PUT ''${DRONE_SERVERURL}'/api/stacks/'${stackId}?endpointId=${DRONE_ENDPOINTID}'' \
+    update_result=$(curl --location --request PUT ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}?endpointId=${PLUGIN_ENDPOINTID}'' \
      --header 'Authorization: Bearer '$token'' \
      --header 'Content-Type: application/json' \
      --data-raw "$update_content")
@@ -90,13 +88,13 @@ fi
 #创建stack
 
 echo
-echo 'create stack  : '${DRONE_SERVERURL}'/api/stacks?endpointId='$DRONE_ENDPOINTID'&method=string&type=2'
+echo 'create stack  : '${PLUGIN_SERVERURL}'/api/stacks?endpointId='$PLUGIN_ENDPOINTID'&method=string&type=2'
 
 echo
-#echo "{\"Name\":\"'${DRONE_STACKNAME}'\",\"StackFileContent\":\"${compose}\",\"Env\":[]}"
+#echo "{\"Name\":\"'${PLUGIN_STACKNAME}'\",\"StackFileContent\":\"${compose}\",\"Env\":[]}"
 #输出结果
 create_content="{\"Name\":\"'${stack}'\",\"StackFileContent\":\"${compose}\",\"Env\":[]}"
-result=$(curl --location --request POST ''${DRONE_SERVERURL}'/api/stacks?endpointId='$DRONE_ENDPOINTID'&method=string&type=2' \
+result=$(curl --location --request POST ''${PLUGIN_SERVERURL}'/api/stacks?endpointId='$PLUGIN_ENDPOINTID'&method=string&type=2' \
 --header 'Authorization: Bearer '${token}'' \
 --header 'Content-Type: application/json' \
 --data-raw "$create_content")

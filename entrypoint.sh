@@ -33,7 +33,7 @@ fi
 #拉取镜像
 echo "pull image: $DRONE_IMAGENAME"
 registry=$(echo "$DRONE_IMAGENAME" | awk -F'/' '{print $1}')
-if [ [ "$registry" =~ "." ] ]
+if [[ "$registry" =~ "." ]]
 then
     base64Registry=$(echo "{\"serveraddress\":\"$registry\"}" | base64)
     curl --location --request POST ''${DRONE_SERVERURL}'/api/endpoints/'$DRONE_ENDPOINTID'/docker/images/create?fromImage='$DRONE_IMAGENAME'' \

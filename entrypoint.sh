@@ -57,6 +57,24 @@ length=$(echo "$stacks" | jq '.|length')
 echo "length: $length"
 #如果长度大于0
 if [ $length -gt 0  ]; then
+  if [ -z "$compose" ]; then
+    #find the current compose file content
+    #/api/stacks/${stackId}/file
+    echo "get stack file :  $INPUT_SERVERURL/api/stacks/$stackId/file"
+    file_result=$(curl --location --request GET ''${INPUT_SERVERURL}'/api/stacks/'${stackId}/file'' \
+     --header 'Authorization: Bearer '$token'')
+    file_msg=$(echo "$file_result" | jq -r '.message')
+    if [ "$file_msg" != "null" ]; then
+      echo "get stack file failed"
+      echo "result: $file_result"
+      exit 1
+    fi
+    echo "file: $file_result"
+    compose=$(echo "$file_result" | jq '.StackFileContent')
+  fi
+
+  update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
+  
   #查找同名stack
   stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
@@ -65,8 +83,6 @@ if [ $length -gt 0  ]; then
     echo
     echo "update stack id=$stackId"
     #找到同名stack，更新stack
-    # update_content=$(jq -n -c -M --arg content "$compose" --arg id $stackId '{"id": $id, "StackFileContent": $content}')
-    update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
     update_result=$(curl --location --request PUT ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}?endpointId=${PLUGIN_ENDPOINTID}'' \
      --header 'Authorization: Bearer '$token'' \
      --header 'Content-Type: application/json' \
@@ -89,7 +105,10 @@ fi
 
 echo
 echo 'create stack  : '${PLUGIN_SERVERURL}'/api/stacks?endpointId='$PLUGIN_ENDPOINTID'&method=string&type=2'
-
+if [ -z "$compose" ]; then
+  echo "docker_compose can't be empty for create stack"
+  exit 1
+fi
 echo
 #echo "{\"Name\":\"'${PLUGIN_STACKNAME}'\",\"StackFileContent\":\"${compose}\",\"Env\":[]}"
 #输出结果

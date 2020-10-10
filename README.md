@@ -45,7 +45,7 @@ steps:
 : name of pull image, like: mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine <br> 将会进行拉取镜像的镜像名 如:mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
 
 + docker_compose
-: content of docker-compose.yml. ps: portainer just support version: "2" <br> docker-compose.yml 的内容 注意:portainer目前仅支持version: "2" <br>
+: content of docker-compose.yml. ps: portainer just support version: "2". left empty, will use last docker-compose for this stack <br> docker-compose.yml 的内容 注意:portainer目前仅支持version: "2". 留空则使用目前的docker-compose <br>
 sample like this:<br>
 ```
 docker_compose: |

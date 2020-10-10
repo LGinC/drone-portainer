@@ -60,8 +60,8 @@ if [ $length -gt 0  ]; then
   if [ -z "$compose" ]; then
     #find the current compose file content
     #/api/stacks/${stackId}/file
-    echo "get stack file :  $INPUT_SERVERURL/api/stacks/$stackId/file"
-    file_result=$(curl --location --request GET ''${INPUT_SERVERURL}'/api/stacks/'${stackId}/file'' \
+    echo "get stack file :  $PLUGIN_SERVERURL/api/stacks/$stackId/file"
+    file_result=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}/file'' \
      --header 'Authorization: Bearer '$token'')
     file_msg=$(echo "$file_result" | jq -r '.message')
     if [ "$file_msg" != "null" ]; then

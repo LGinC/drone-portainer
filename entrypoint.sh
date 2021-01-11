@@ -64,6 +64,8 @@ if [ $length -gt 0  ]; then
   #查找同名stack
   stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
+  
+if [ $stackId -gt 0 ]; then
   if [ -z "$compose" ]; then
     #find the current compose file content
     #/api/stacks/${stackId}/file
@@ -82,10 +84,9 @@ if [ $length -gt 0  ]; then
   else
     update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
   fi
-
+fi
   
-
-  if [ $stackId -gt 0 ]; then
+if [ $stackId -gt 0 ]; then
  #find the stack id, and delete it
     echo
     echo "update stack id=$stackId"

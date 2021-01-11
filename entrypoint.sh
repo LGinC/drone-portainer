@@ -12,7 +12,6 @@ if [ -z "$PLUGIN_DOCKER_COMPOSE" ]; then
 else
   compose=$(echo "$PLUGIN_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n
 fi
-
 #把stack name转为小写
 stack=$(echo "$PLUGIN_STACKNAME" | tr "[:upper:]" "[:lower:]") #ToLowerCase
 
@@ -64,27 +63,26 @@ if [ $length -gt 0  ]; then
   #查找同名stack
   stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
-
-if [[ -z $stackId && $stackId -gt 0 ]]; then
-  if [ -z "$compose" ]; then
-    #find the current compose file content
-    #/api/stacks/${stackId}/file
-    echo "get stack file :  $PLUGIN_SERVERURL/api/stacks/$stackId/file"
-    file_result=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}/file'' \
-     --header 'Authorization: Bearer '$token'')
-    file_msg=$(echo "$file_result" | jq -r '.message')
-    if [ "$file_msg" != "null" ]; then
-      echo "get stack file failed"
-      echo "result: $file_result"
-      exit 1
-    fi
-    echo "file: $file_result"
-    compose=$(echo "$file_result" | jq '.StackFileContent')
-    update_content="{\"id\":${stackId},\"StackFileContent\":${compose},\"Env\":[]}"
-  else
+  if [[ -z $stackId && $stackId -gt 0 ]]; then
+    if [ -z "$compose" ]; then
+      #find the current compose file content
+      #/api/stacks/${stackId}/file
+      echo "get stack file :  $PLUGIN_SERVERURL/api/stacks/$stackId/file"
+      file_result=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}/file'' \
+       --header 'Authorization: Bearer '$token'')
+      file_msg=$(echo "$file_result" | jq -r '.message')
+      if [ "$file_msg" != "null" ]; then
+        echo "get stack file failed"
+        echo "result: $file_result"
+        exit 1
+      fi
+      echo "file: $file_result"
+      compose=$(echo "$file_result" | jq '.StackFileContent')
+      update_content="{\"id\":${stackId},\"StackFileContent\":${compose},\"Env\":[]}"
+    else
     update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
-  fi
-  echo "update stack id=$stackId"
+    fi
+    echo "update stack id=$stackId"
     #找到同名stack，更新stack
     update_result=$(curl --location --request PUT ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}?endpointId=${PLUGIN_ENDPOINTID}'' \
      --header 'Authorization: Bearer '$token'' \
@@ -99,8 +97,8 @@ if [[ -z $stackId && $stackId -gt 0 ]]; then
     fi
     echo "update success"
     exit 0
+  fi
 fi
-
 #create stacks
 #创建stack
 

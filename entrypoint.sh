@@ -84,12 +84,7 @@ if [[ -z $stackId && $stackId -gt 0 ]]; then
   else
     update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
   fi
-fi
-  
-if [ $stackId -gt 0 ]; then
- #find the stack id, and delete it
-    echo
-    echo "update stack id=$stackId"
+  echo "update stack id=$stackId"
     #找到同名stack，更新stack
     update_result=$(curl --location --request PUT ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}?endpointId=${PLUGIN_ENDPOINTID}'' \
      --header 'Authorization: Bearer '$token'' \
@@ -104,9 +99,7 @@ if [ $stackId -gt 0 ]; then
     fi
     echo "update success"
     exit 0
-  fi
 fi
-
 
 #create stacks
 #创建stack

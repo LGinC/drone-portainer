@@ -8,6 +8,7 @@ if [ -z "$PLUGIN_ENDPOINTID" ]; then
 fi
 
 if [ -z "$PLUGIN_DOCKER_COMPOSE" ]; then
+  echo 'compose is null'
   compose=''
 else
   compose=$(echo "$PLUGIN_DOCKER_COMPOSE" | sed 's#\"#\\"#g' | sed ":a;N;s/\\n/\\\\n/g;ta") # replace charactor  "->\"   \n -> \\n
@@ -63,7 +64,7 @@ if [ $length -gt 0  ]; then
   #查找同名stack
   stackId=$(echo "$stacks" | jq '.[] | select(.Name=="'$stack'") | .Id') #find the stack name of PLUGIN_STACKNAME
   echo "stackId: $stackId"
-  if [[ -z $stackId && $stackId -gt 0 ]]; then
+  if [[ ! -z $stackId && $stackId -gt 0 ]]; then
     if [ -z "$compose" ]; then
       #find the current compose file content
       #/api/stacks/${stackId}/file
@@ -102,7 +103,7 @@ fi
 #create stacks
 #创建stack
 
-echo
+echo 'cannot find the same name stack'
 echo 'create stack  : '${PLUGIN_SERVERURL}'/api/stacks?endpointId='$PLUGIN_ENDPOINTID'&method=string&type=2'
 if [ -z "$compose" ]; then
   echo "docker_compose can't be empty for create stack"

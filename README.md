@@ -6,7 +6,7 @@
 ```yaml
 steps:
 - name: portainer
-  image: turinge/drone-portainer
+  image: lginc/drone-portainer
   settings:
     serverurl: http://xxxxx:9000
     username: 

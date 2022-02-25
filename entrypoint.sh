@@ -35,6 +35,7 @@ fi
 #拉取镜像
 echo "pull image: $PLUGIN_IMAGENAME"
 registry=$(echo "$PLUGIN_IMAGENAME" | awk -F'/' '{print $1}')
+$PLUGIN_IMAGENAME=$(echo $PLUGIN_IMAGENAME | sed "s#/#%2F#g")
 if [[ "$registry" =~ "." ]]
 then
     base64Registry=$(echo "{\"serveraddress\":\"$registry\"}" | base64)
@@ -44,9 +45,6 @@ else
     curl --location --request POST ''${PLUGIN_SERVERURL}'/api/endpoints/'$PLUGIN_ENDPOINTID'/docker/images/create?fromImage='$PLUGIN_IMAGENAME'' \
     -H "Authorization: Bearer $token"
 fi
-
-
-
 
 
 #get stacks
@@ -70,7 +68,7 @@ if [ $length -gt 0  ]; then
       #/api/stacks/${stackId}/file
       echo "get stack file :  $PLUGIN_SERVERURL/api/stacks/$stackId/file"
       file_result=$(curl --location --request GET ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}/file'' \
-       --header 'Authorization: Bearer '$token'')
+        --header 'Authorization: Bearer '$token'')
       file_msg=$(echo "$file_result" | jq -r '.message')
       if [ "$file_msg" != "null" ]; then
         echo "get stack file failed"
@@ -79,16 +77,16 @@ if [ $length -gt 0  ]; then
       fi
       echo "file: $file_result"
       compose=$(echo "$file_result" | jq '.StackFileContent')
-      update_content="{\"id\":${stackId},\"StackFileContent\":${compose},\"Env\":[]}"
+      update_content="{\"id\":${stackId},\"StackFileContent\":${compose},\"Env\":[], \"Prune\":false}"
     else
-    update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[]}"
+      update_content="{\"id\":${stackId},\"StackFileContent\":\"${compose}\",\"Env\":[], \"Prune\":false}"
     fi
     echo "update stack id=$stackId"
     #找到同名stack，更新stack
     update_result=$(curl --location --request PUT ''${PLUGIN_SERVERURL}'/api/stacks/'${stackId}?endpointId=${PLUGIN_ENDPOINTID}'' \
-     --header 'Authorization: Bearer '$token'' \
-     --header 'Content-Type: application/json' \
-     --data-raw "$update_content")
+      --header 'Authorization: Bearer '$token'' \
+      --header 'Content-Type: application/json' \
+      --data-raw "$update_content")
     update_result_msg=$(echo "$update_result" | jq -r '.message')
     if [ "$update_result_msg" != "null" ]; then
       echo "update stack failed"

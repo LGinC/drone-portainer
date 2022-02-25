@@ -35,7 +35,7 @@ fi
 #拉取镜像
 echo "pull image: $PLUGIN_IMAGENAME"
 registry=$(echo "$PLUGIN_IMAGENAME" | awk -F'/' '{print $1}')
-$PLUGIN_IMAGENAME=$(echo $PLUGIN_IMAGENAME | sed "s#/#%2F#g")
+PLUGIN_IMAGENAME=$(echo $PLUGIN_IMAGENAME | sed "s#/#%2F#g")
 if [[ "$registry" =~ "." ]]
 then
     base64Registry=$(echo "{\"serveraddress\":\"$registry\"}" | base64)

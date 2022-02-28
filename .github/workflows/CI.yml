@@ -35,11 +35,8 @@ jobs:
           use-cross: true
           args: --release --target=${{ matrix.target }}
 
-      - name: ls tree
-        run: tree .
-        
       - name: copy binary
-        run: cp target/${{ matrix.target }}/release/douban-api-rs docker/
+        run: cp target/${{ matrix.target }}/release/drone-portainer docker/
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1

@@ -23,7 +23,6 @@ async fn main() -> Result<(), reqwest::Error> {
         Ok(c) => c,
         Err(_) => String::default(),
     };
-    compose = String::from("version: \"3\"\nservices:\n          server:\n            image: registry.cn-beijing.aliyuncs.com/jyshare/download-report:dev\n            ports:\n            - 13256:80\n");
     let stack_name = env::var("PLUGIN_STACKNAME").unwrap();
     let username = env::var("PLUGIN_USERNAME").unwrap();
     let password = env::var("PLUGIN_PASSWORD").unwrap();

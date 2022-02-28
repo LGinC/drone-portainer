@@ -18,6 +18,9 @@ steps:
     imagenames: 
       - xxx/xxx
       - myhub.com/xx1/xxx
+    env:
+      - TZ:Asia/Shanghai
+      - myTag:App
     docker_compose: |
       version: "3"
       services:
@@ -48,6 +51,8 @@ steps:
 + imagenames
 : required, names of pull images, like: mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine <br> 将会进行拉取镜像的镜像名 如:mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
 
++ env:
+: optional, environments of stack.
 + docker_compose
 : optional, content of docker-compose.yml. 
 sample like this:<br>

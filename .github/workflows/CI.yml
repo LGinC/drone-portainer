@@ -28,12 +28,16 @@ jobs:
           command: fmt
           args: --all -- --check
       
-      - uses: actions-rs/cargo@v1
+      - name: cargo build
+        uses: actions-rs/cargo@v1
         with:
           command: build
           use-cross: true
           args: --release --target=${{ matrix.target }}
 
+      - name: ls tree
+        run: tree .
+        
       - name: copy binary
         run: cp target/${{ matrix.target }}/release/douban-api-rs docker/
       

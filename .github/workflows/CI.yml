@@ -32,7 +32,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          #use-cross: true
+          use-cross: true
           args: --release --target=${{ matrix.target }}
 
       - name: copy binary

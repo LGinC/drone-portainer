@@ -12,7 +12,7 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-musl
-          # - aarch64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
     
     steps:
       - uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          use-cross: true
+          #use-cross: true
           args: --release --target=${{ matrix.target }}
 
       - name: copy binary

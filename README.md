@@ -6,7 +6,7 @@
 ```yaml
 steps:
 - name: portainer
-  image: lginc/drone-portainer
+  image: lginc/drone-portainer:dev
   settings:
     serverurl: http://xxxxx:9000
     username: 
@@ -15,41 +15,45 @@ steps:
       from_secret: portainer_password
     endpointId: 1
     stackname: xxxservice
-    imagename: xxx/xxx
+    imagenames: 
+      - xxx/xxx
+      - myhub.com/xx1/xxx
     docker_compose: |
-      version: "2"
+      version: "3"
       services:
         xxx:
           image: xxx/xxx
           ports:
           - 80:80
+        xx1:
+          image: myhub.com/xx1/xxx
 ```
 # Parameter Reference
 
 + serverurl
-: portainer server url. like this: http://xxx.com:9000
+: required, portainer server url. like this: http://xxx.com:9000
 
 + username
-: portainer username
+: required, portainer username
 
 + password
-: portainer password
+: required, portainer password
 
 + endpointId
-: portainer endpoint id,default 1, localhost is 1 <br> portainer终结点id，默认是1,即第一个，一般为localhost
+: optional, portainer endpoint id,default 1, localhost is 1 <br> portainer终结点id，默认是1,即第一个，一般为localhost
 
 + stackname
-: name of stack, show in stack list <br> 服务栈的名称，会在stacks列表里显
+: required, name of stack, show in stack list <br> 服务栈的名称，会在stacks列表里显
 
-+ imagename
-: name of pull image, like: mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine <br> 将会进行拉取镜像的镜像名 如:mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
++ imagenames
+: required, names of pull images, like: mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine <br> 将会进行拉取镜像的镜像名 如:mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
 
 + docker_compose
-: content of docker-compose.yml. ps: portainer just support version: "2". leave empty for use the current docker-compose file content <br> docker-compose.yml 的内容 注意:portainer目前仅支持version: "2". 留空则使用目前的docker-compose <br>
+: optional, content of docker-compose.yml. 
 sample like this:<br>
 ```
 docker_compose: |
-  version: "2"
+  version: "3"
   services:
   dotnettest:
     image:  mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine

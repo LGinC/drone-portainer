@@ -26,10 +26,13 @@ async fn main() -> Result<(), reqwest::Error> {
     let stack_name = env::var("PLUGIN_STACKNAME").unwrap();
     let username = env::var("PLUGIN_USERNAME").unwrap();
     let password = env::var("PLUGIN_PASSWORD").unwrap();
-    let images_str = env::var("PLUGIN_IMAGENAMES").unwrap();
+    let images_str = match env::var("PLUGIN_IMAGENAMES") {
+        Ok(s) => s,
+        Err(_) => String::default(),
+    };
     let env_str = match env::var("PLUGIN_ENV") {
         Ok(e) => e,
-        Err(_) => String::from("[]"),
+        Err(_) => String::default(),
     };
     let envs: Vec<&str> = env_str.split(',').collect();
     let mut env = Vec::<Pair>::new();
@@ -58,46 +61,48 @@ async fn main() -> Result<(), reqwest::Error> {
     let jwt = format!("Bearer {}", &login_result["jwt"].as_str().unwrap());
 
     //2. pull image
-    println!("pull images: {}", &images_str);
-    //get all registry
-    let registries: serde_json::Value = client
-        .get(format!("{}/api/registries", &server))
-        .header("Authorization", &jwt)
-        .send()
-        .await?
-        .json()
-        .await?;
-    let mut registy_map: HashMap<&str, i32> = HashMap::new();
-    for r in registries.as_array().unwrap() {
-        registy_map.insert(r["URL"].as_str().unwrap(), r["Id"].as_i64().unwrap() as i32);
-    }
-
-    let images: Vec<&str> = images_str.split(',').collect();
-    for image in images {
-        let mut pull_image_header = reqwest::header::HeaderMap::new();
-        pull_image_header.insert("Authorization", jwt.parse().unwrap());
-        let registry_name = image.split('/').nth(0).unwrap();
-        //if image is in registry_map, pull it with X-Registry-Auth
-        if registy_map.contains_key(registry_name) {
-            let registry_id = registy_map[registry_name];
-            let repo_auth = encode(format!("{{\"registryId\":{}}}", registry_id));
-            pull_image_header.insert("X-Registry-Auth", repo_auth.parse().unwrap());
-        }
-        let pull_image_result = client
-            .post(format!(
-                "{}/api/endpoints/{}/docker/images/create?fromImage={}",
-                &server,
-                &endpoint,
-                image.trim()
-            ))
-            .headers(pull_image_header)
+    if images_str != "" {
+        println!("pull images: {}", &images_str);
+        //get all registry
+        let registries: serde_json::Value = client
+            .get(format!("{}/api/registries", &server))
+            .header("Authorization", &jwt)
             .send()
+            .await?
+            .json()
             .await?;
-        if pull_image_result.status() == 200 {
-            println!("pull image success : {}", image);
-        } else {
-            let msg_detail: serde_json::Value = pull_image_result.json().await?;
-            println!("message:{}", &msg_detail["message"].as_str().unwrap());
+        let mut registy_map: HashMap<&str, i32> = HashMap::new();
+        for r in registries.as_array().unwrap() {
+            registy_map.insert(r["URL"].as_str().unwrap(), r["Id"].as_i64().unwrap() as i32);
+        }
+
+        let images: Vec<&str> = images_str.split(',').collect();
+        for image in images {
+            let mut pull_image_header = reqwest::header::HeaderMap::new();
+            pull_image_header.insert("Authorization", jwt.parse().unwrap());
+            let registry_name = image.split('/').nth(0).unwrap();
+            //if image is in registry_map, pull it with X-Registry-Auth
+            if registy_map.contains_key(registry_name) {
+                let registry_id = registy_map[registry_name];
+                let repo_auth = encode(format!("{{\"registryId\":{}}}", registry_id));
+                pull_image_header.insert("X-Registry-Auth", repo_auth.parse().unwrap());
+            }
+            let pull_image_result = client
+                .post(format!(
+                    "{}/api/endpoints/{}/docker/images/create?fromImage={}",
+                    &server,
+                    &endpoint,
+                    image.trim()
+                ))
+                .headers(pull_image_header)
+                .send()
+                .await?;
+            if pull_image_result.status() == 200 {
+                println!("pull image success : {}", image);
+            } else {
+                let msg_detail: serde_json::Value = pull_image_result.json().await?;
+                println!("message:{}", &msg_detail["message"].as_str().unwrap());
+            }
         }
     }
 

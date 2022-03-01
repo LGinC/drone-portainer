@@ -57,11 +57,13 @@ steps:
 - mcr.microsoft.com/dotnet/core/aspnet:6.0-alpine  
 - alpine:latest
 ```
-<br> 可选 将会进行拉取镜像的镜像名列表, 为数组
+add this param because not auto pull image when image:tag not change in docker-compose
+<br> 可选 将会进行拉取镜像的镜像名列表, 为数组.加这个参数是因为docker-compose里的镜像名:tag 没有变化则不会自动拉取镜像
 
 + env:
 : optional, environments of stack.
 <br> 可选 环境变量列表 
+![env](https://p.sda1.dev/5/b982dedaf195db23d1767701e4200ebd/msedge_xwrxILQuNN.webp)
 + docker_compose
 : optional, content of docker-compose.yml.  it will be filled by original stack when stack exist.
 <br> 可选, docker-compose.yaml的内容. 如果stack已经存在,不填则会自动获取已经存在的stack内容

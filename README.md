@@ -8,7 +8,7 @@ docker-compose in step
 ```yaml
 steps:
 - name: portainer
-  image: lginc/drone-portainer:dev
+  image: lginc/drone-portainer
   settings:
     serverurl: http://xxxxx:9000
     username: 
@@ -42,7 +42,7 @@ or
 ```yaml
 steps:
 - name: portainer
-  image: lginc/drone-portainer:dev
+  image: lginc/drone-portainer
   settings:
     serverurl: http://xxxxx:9000
     apikey: 

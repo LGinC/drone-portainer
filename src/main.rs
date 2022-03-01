@@ -31,7 +31,7 @@ async fn main() -> Result<(), reqwest::Error> {
         Ok(e) => e,
         Err(_) => String::from("[]"),
     };
-    let envs = serde_json::from_str::<Vec<&str>>(&env_str).unwrap();
+    let envs: Vec<&str> = env_str.split(',').collect();
     let mut env = Vec::<Pair>::new();
     if envs.len() > 0 {
         for e in envs {
@@ -72,7 +72,7 @@ async fn main() -> Result<(), reqwest::Error> {
         registy_map.insert(r["URL"].as_str().unwrap(), r["Id"].as_i64().unwrap() as i32);
     }
 
-    let images: Vec<&str> = serde_json::from_str(&images_str).unwrap();
+    let images: Vec<&str> = images_str.split(',').collect();
     for image in images {
         let mut pull_image_header = reqwest::header::HeaderMap::new();
         pull_image_header.insert("Authorization", jwt.parse().unwrap());
@@ -86,7 +86,7 @@ async fn main() -> Result<(), reqwest::Error> {
         let pull_image_result = client
             .post(format!(
                 "{}/api/endpoints/{}/docker/images/create?fromImage={}",
-                &server, &endpoint, image
+                &server, &endpoint, image.trim()
             ))
             .headers(pull_image_header)
             .send()

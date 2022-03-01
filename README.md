@@ -45,8 +45,8 @@ steps:
   image: lginc/drone-portainer
   settings:
     serverurl: http://xxxxx:9000
-    apikey: 
-      from_secret: portainer_apikey
+    access_token: 
+      from_secret: portainer_ak
     endpointId: 2
     stackname: xxxservice
     imagenames: 
@@ -91,7 +91,8 @@ click on my account in the top right -> Scroll down to the Access tokens section
 + imagenames
 : optional, names of pull images, a arrary. add this param because not auto pull image when image:tag not change in docker-compose
 <br> 可选 将会进行拉取镜像的镜像名列表, 为数组.加这个参数是因为docker-compose里的镜像名:tag 没有变化则不会自动拉取镜像 <br>
-: like this: 
+ like this: 
+
 ```yaml
 - mcr.microsoft.com/dotnet/core/aspnet:6.0-alpine  
 - alpine:latest
@@ -103,6 +104,10 @@ click on my account in the top right -> Scroll down to the Access tokens section
 <br> 可选 环境变量列表 
 ![env](https://p.sda1.dev/5/b982dedaf195db23d1767701e4200ebd/msedge_xwrxILQuNN.webp)
 
++ variables:
+: optional, these variables will be replaced in docker-compose file，  Foo=bar will replace {{ Foo }} for bar.
+<br> 可选，会自动替换docker-compose中的变量 如设定Foo=bar,  则会把docker-compose中的{{ Foo }}替换为bar
+
 + docker_compose
 : optional, content of docker-compose.yml.  it will be filled by original stack when stack exist.
 <br> 可选, docker-compose.yaml的内容. 如果stack已经存在,不填则会自动获取已经存在的stack内容
@@ -112,7 +117,7 @@ docker_compose: |
   version: "3"
   services:
     dotnettest:
-      image:  mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
+      image:  mcr.microsoft.com/dotnet/core/aspnet:6.0-alpine
       container_name: dotnet_runtime
 ```
 
@@ -130,4 +135,5 @@ note: if stack exist, it will be use original content of stack, not content of d
 + repo_password
 : optional, password of git repository
 <br> 可选, git仓库密码<br>
+
 

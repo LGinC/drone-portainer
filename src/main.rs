@@ -65,9 +65,9 @@ async fn main() -> Result<(), reqwest::Error> {
     if compose == "" && compose_path != "" && variables.len() > 0 {
         compose = client
             .get(format!(
-                "{}/raw/branch/{}/{}",
+                "{}/raw/{}/{}",
                 env::var("DRONE_GIT_HTTP_URL").unwrap(),
-                env::var("DRONE_REPO_BRANCH").unwrap(),
+                env::var("DRONE_COMMIT_REF").unwrap(),
                 compose_path
             ))
             .send()

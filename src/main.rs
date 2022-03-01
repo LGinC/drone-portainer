@@ -86,7 +86,9 @@ async fn main() -> Result<(), reqwest::Error> {
         let pull_image_result = client
             .post(format!(
                 "{}/api/endpoints/{}/docker/images/create?fromImage={}",
-                &server, &endpoint, image.trim()
+                &server,
+                &endpoint,
+                image.trim()
             ))
             .headers(pull_image_header)
             .send()

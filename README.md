@@ -52,13 +52,14 @@ steps:
 <br> 必填 服务栈的名称，会在stacks列表里显
 
 + imagenames
-: optional, names of pull images, a arrary like: 
+: optional, names of pull images, a arrary. add this param because not auto pull image when image:tag not change in docker-compose
+<br> 可选 将会进行拉取镜像的镜像名列表, 为数组.加这个参数是因为docker-compose里的镜像名:tag 没有变化则不会自动拉取镜像 <br>
+: like this: 
 ```yaml
 - mcr.microsoft.com/dotnet/core/aspnet:6.0-alpine  
 - alpine:latest
 ```
-add this param because not auto pull image when image:tag not change in docker-compose
-<br> 可选 将会进行拉取镜像的镜像名列表, 为数组.加这个参数是因为docker-compose里的镜像名:tag 没有变化则不会自动拉取镜像
+
 
 + env:
 : optional, environments of stack.

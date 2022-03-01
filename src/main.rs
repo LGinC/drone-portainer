@@ -9,28 +9,8 @@ pub struct Pair {
     value: String,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
-    //portainer server url
-    let server = env::var("PLUGIN_SERVERURL").unwrap();
-    //portainer endpoint, default 1
-    let endpoint = match env::var("PLUGIN_ENDPOINTID") {
-        Ok(e) => e,
-        Err(_) => String::from("1"),
-    };
-    //stack content, content of docker-compose.yml
-    let mut compose = match env::var("PLUGIN_DOCKER_COMPOSE") {
-        Ok(c) => c,
-        Err(_) => String::default(),
-    };
-    let stack_name = env::var("PLUGIN_STACKNAME").unwrap();
-    let username = env::var("PLUGIN_USERNAME").unwrap();
-    let password = env::var("PLUGIN_PASSWORD").unwrap();
-    let images_str = match env::var("PLUGIN_IMAGENAMES") {
-        Ok(s) => s,
-        Err(_) => String::default(),
-    };
-    let env_str = match env::var("PLUGIN_ENV") {
+fn get_pair_from_env(env: &str) -> Vec<Pair> {
+    let env_str = match env::var(env) {
         Ok(e) => e,
         Err(_) => String::default(),
     };
@@ -38,18 +18,76 @@ async fn main() -> Result<(), reqwest::Error> {
         "" => Vec::new(),
         v => v.split(',').collect(),
     };
-    let mut env = Vec::<Pair>::new();
+    let mut re = Vec::<Pair>::new();
     if envs.len() > 0 {
         for e in envs {
             let ep: Vec<&str> = e.split('=').into_iter().collect();
-            env.push(Pair {
+            re.push(Pair {
                 name: ep[0].trim().to_string(),
                 value: ep[1].trim().to_string(),
             })
         }
     }
+    re
+}
 
+fn get_env_string(env: &str, default: Option<String>) -> String {
+    match env::var(env) {
+        Ok(e) => e,
+        Err(_) => default.unwrap_or_default(),
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
+    //portainer server url
+    let server = env::var("PLUGIN_SERVERURL").unwrap();
+    //portainer endpoint, default 1
+    let endpoint = get_env_string("PLUGIN_ENDPOINTID", Some(String::from("1")));
+    //stack content, content of docker-compose.yml
+    let mut compose = get_env_string("PLUGIN_DOCKER_COMPOSE", None);
+    let compose_path = get_env_string("PLUGIN_DOCKER_COMPOSE_PATH", None);
+    let stack_name = env::var("PLUGIN_STACKNAME").unwrap();
+    let username = env::var("PLUGIN_USERNAME").unwrap();
+    let password = env::var("PLUGIN_PASSWORD").unwrap();
+    let images_str = get_env_string("PLUGIN_IMAGENAMES", None);
+    let variables = get_pair_from_env("PLUGIN_VARIABLES");
+    let envs = get_pair_from_env("PLUGIN_ENV");
     let client = reqwest::Client::new();
+
+    //read content of compose_path to compose
+    if compose == "" && compose_path != "" {
+        println!(
+            "url: {}",
+            format!(
+                "{}/raw/branch/{}/{}",
+                env::var("DRONE_GIT_HTTP_URL").unwrap(),
+                env::var("DRONE_REPO_BRANCH").unwrap(),
+                compose_path
+            )
+        );
+        compose = client
+            .get(format!(
+                "{}/raw/branch/{}/{}",
+                env::var("DRONE_GIT_HTTP_URL").unwrap(),
+                env::var("DRONE_REPO_BRANCH").unwrap(),
+                compose_path
+            ))
+            .send()
+            .await?
+            .text()
+            .await?;
+            println!("content:{}", compose);
+            return Ok(())
+    }
+    //replace variables
+    if variables.len() > 0 && compose != "" {
+        for v in variables {
+            compose = compose.replace(format!("{{{{ {} }}}}", v.name).as_str(), &v.value);
+            compose = compose.replace(format!("{{{{{}}}}}", v.name).as_str(), &v.value);
+        }
+    }
+
     //1. login to portainer
     let login_result: serde_json::Value = client
         .post(format!("{}/api/auth", &server))
@@ -155,7 +193,7 @@ async fn main() -> Result<(), reqwest::Error> {
             .json(&serde_json::json!({
                 "id": stack_id,
                 "StackFileContent": &compose,
-                "Env": env,
+                "Env": envs,
                 "Prune": false}))
             .send()
             .await?
@@ -186,7 +224,7 @@ async fn main() -> Result<(), reqwest::Error> {
         .header("Authorization", &jwt)
         .json(&serde_json::json!({
             "StackFileContent": &compose,
-            "Env": env,
+            "Env": envs,
             "Name": &stack_name,
         }))
         .send()

@@ -48,24 +48,21 @@ async fn main() -> Result<(), reqwest::Error> {
     let mut compose = get_env_string("PLUGIN_DOCKER_COMPOSE", None);
     let compose_path = get_env_string("PLUGIN_DOCKER_COMPOSE_PATH", None);
     let stack_name = env::var("PLUGIN_STACKNAME").unwrap();
-    let username = env::var("PLUGIN_USERNAME").unwrap();
-    let password = env::var("PLUGIN_PASSWORD").unwrap();
+    let api_key = get_env_string("PLUGIN_ACCESS_TOKEN", None);
+    let username = get_env_string("PLUGIN_USERNAME", None);
+    let password = get_env_string("PLUGIN_PASSWORD", None);
+    if api_key == "" && (username == "" || password == "") {
+        panic!("api_key and username or password cannot both empty");
+    }
+    let repo_username = get_env_string("PLUGIN_REPO_USERNAME", None);
+    let repo_password = get_env_string("PLUGIN_REPO_PASSWORD", None);
     let images_str = get_env_string("PLUGIN_IMAGENAMES", None);
     let variables = get_pair_from_env("PLUGIN_VARIABLES");
     let envs = get_pair_from_env("PLUGIN_ENV");
     let client = reqwest::Client::new();
 
     //read content of compose_path to compose
-    if compose == "" && compose_path != "" {
-        println!(
-            "url: {}",
-            format!(
-                "{}/raw/branch/{}/{}",
-                env::var("DRONE_GIT_HTTP_URL").unwrap(),
-                env::var("DRONE_REPO_BRANCH").unwrap(),
-                compose_path
-            )
-        );
+    if compose == "" && compose_path != "" && variables.len() > 0 {
         compose = client
             .get(format!(
                 "{}/raw/branch/{}/{}",
@@ -77,8 +74,6 @@ async fn main() -> Result<(), reqwest::Error> {
             .await?
             .text()
             .await?;
-        println!("content:{}", compose);
-        return Ok(());
     }
     //replace variables
     if variables.len() > 0 && compose != "" {
@@ -89,17 +84,22 @@ async fn main() -> Result<(), reqwest::Error> {
     }
 
     //1. login to portainer
-    let login_result: serde_json::Value = client
-        .post(format!("{}/api/auth", &server))
-        .json(&serde_json::json!({
-            "Username": &username,
-            "Password": &password,
-        }))
-        .send()
-        .await?
-        .json()
-        .await?;
-    let jwt = format!("Bearer {}", &login_result["jwt"].as_str().unwrap());
+    let mut auth_name = "X-API-Key";
+    let mut auth_value = api_key;
+    if auth_value == "" {
+        auth_name = "Authorization";
+        let login_result: serde_json::Value = client
+            .post(format!("{}/api/auth", &server))
+            .json(&serde_json::json!({
+                "Username": &username,
+                "Password": &password,
+            }))
+            .send()
+            .await?
+            .json()
+            .await?;
+        auth_value = format!("Bearer {}", &login_result["jwt"].as_str().unwrap());
+    }
 
     //2. pull image
     if images_str != "" {
@@ -107,7 +107,7 @@ async fn main() -> Result<(), reqwest::Error> {
         //get all registry
         let registries: serde_json::Value = client
             .get(format!("{}/api/registries", &server))
-            .header("Authorization", &jwt)
+            .header(auth_name, &auth_value)
             .send()
             .await?
             .json()
@@ -120,7 +120,7 @@ async fn main() -> Result<(), reqwest::Error> {
         let images: Vec<&str> = images_str.split(',').collect();
         for image in images {
             let mut pull_image_header = reqwest::header::HeaderMap::new();
-            pull_image_header.insert("Authorization", jwt.parse().unwrap());
+            pull_image_header.insert(auth_name, auth_value.parse().unwrap());
             let registry_name = image.split('/').nth(0).unwrap();
             //if image is in registry_map, pull it with X-Registry-Auth
             if registy_map.contains_key(registry_name) {
@@ -153,7 +153,7 @@ async fn main() -> Result<(), reqwest::Error> {
             "{}/api/stacks?filters={{\"EndpointID\":{},\"IncludeOrphanedStacks\":true}}",
             &server, &endpoint
         ))
-        .header("Authorization", &jwt)
+        .header(auth_name, &auth_value)
         .send()
         .await?
         .json()
@@ -173,7 +173,7 @@ async fn main() -> Result<(), reqwest::Error> {
         if compose == String::default() {
             let compose_result: serde_json::Value = client
                 .get(format!("{}/api/stacks/{}/file", &server, stack_id))
-                .header("Authorization", &jwt)
+                .header(auth_name, &auth_value)
                 .send()
                 .await?
                 .json()
@@ -189,7 +189,7 @@ async fn main() -> Result<(), reqwest::Error> {
                 "{}/api/stacks/{}?endpointId={}",
                 &server, stack_id, endpoint
             ))
-            .header("Authorization", &jwt)
+            .header(auth_name, auth_value)
             .json(&serde_json::json!({
                 "id": stack_id,
                 "StackFileContent": &compose,
@@ -210,27 +210,54 @@ async fn main() -> Result<(), reqwest::Error> {
     }
 
     //5. create stack
-    if compose == String::default() {
+    if compose == "" && compose_path == "" {
         panic!("compose is empty, cannot create stack");
     }
-
+    if compose == "" {}
     //type: 0: docker compose, 1: docker stack
     //method: file string or repository
-    let create_result: serde_json::Value = client
-        .post(format!(
-            "{}/api/stacks?endpointId={}&method=string&type=2",
-            &server, endpoint
-        ))
-        .header("Authorization", &jwt)
-        .json(&serde_json::json!({
-            "StackFileContent": &compose,
-            "Env": envs,
-            "Name": &stack_name,
-        }))
-        .send()
-        .await?
-        .json()
-        .await?;
+    let create_result: serde_json::Value = match compose.as_str() {
+        "" => {
+            client
+                .post(format!(
+                    "{}/api/stacks?endpointId={}&method=repository&type=2",
+                    &server, endpoint
+                ))
+                .header(auth_name, auth_value)
+                .json(&serde_json::json!({
+                    "repositoryURL": env::var("DRONE_GIT_HTTP_URL").unwrap(),
+                    "repositoryReferenceName": env::var("DRONE_COMMIT_REF").unwrap(),
+                    "composeFile": compose_path,
+                    "repositoryAuthentication": repo_password != "",
+                    "repositoryUsername": repo_username,
+                    "repositoryPassword": repo_password,
+                    "Env": envs,
+                    "Name": &stack_name,
+                }))
+                .send()
+                .await?
+                .json()
+                .await?
+        }
+
+        c => {
+            client
+                .post(format!(
+                    "{}/api/stacks?endpointId={}&method=string&type=2",
+                    &server, endpoint
+                ))
+                .header(auth_name, auth_value)
+                .json(&serde_json::json!({
+                    "StackFileContent": c,
+                    "Env": envs,
+                    "Name": &stack_name,
+                }))
+                .send()
+                .await?
+                .json()
+                .await?
+        }
+    };
     match create_result["message"].as_str() {
         Some(msg) => {
             println!("create stack failed: {}", msg);

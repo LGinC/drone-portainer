@@ -34,7 +34,10 @@ async fn main() -> Result<(), reqwest::Error> {
         Ok(e) => e,
         Err(_) => String::default(),
     };
-    let envs: Vec<&str> = env_str.split(',').collect();
+    let envs: Vec<&str> = match env_str.as_str() {
+        "" => Vec::new(),
+        v => v.split(',').collect(),
+    };
     let mut env = Vec::<Pair>::new();
     if envs.len() > 0 {
         for e in envs {

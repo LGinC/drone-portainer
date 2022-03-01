@@ -118,7 +118,8 @@ docker_compose: |
 
 + docker_compose_path
 : optional, docker-compose.yml in repository relative path. just need choose one between docker_compose and docker_compose_path.
-<br> 可选, docker-comose.yml在git仓库中的相对路径, docker_compose和docker_compose_path二选一即可<br>
+note: if stack exist, it will be use original content of stack, not content of docker-compose.yml in repository, so docker_compose_path can work when stack not exist
+<br> 可选, docker-comose.yml在git仓库中的相对路径, docker_compose和docker_compose_path二选一即可, 注意,如果stack已存在会先使用已存在的stack的内容,即docker_compose_path仅能用于创建stack的情况<br>
 
 
 + repo_username

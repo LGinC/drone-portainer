@@ -77,8 +77,8 @@ async fn main() -> Result<(), reqwest::Error> {
             .await?
             .text()
             .await?;
-            println!("content:{}", compose);
-            return Ok(())
+        println!("content:{}", compose);
+        return Ok(());
     }
     //replace variables
     if variables.len() > 0 && compose != "" {

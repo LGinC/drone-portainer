@@ -65,11 +65,13 @@ jobs:
         with:
           name: drone-portainer-x86_64-unknown-linux-musl
           path: docker/
+      - run: cd docker && mv drone-portainer drone-portainer-amd64
       - name: download arm64 binary
         uses: actions/download-artifact@v2
         with:
           name: drone-portainer-aarch64-unknown-linux-musl
           path: docker/
+      - run: cd docker && mv drone-portainer drone-portainer-arm64
       - name: Build and push Docker images
         uses: docker/build-push-action@v2
         with:

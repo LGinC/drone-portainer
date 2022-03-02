@@ -79,5 +79,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/lginc/drone-portainer:latest
-            lginc/drone-portainer:latest
+            ghcr.io/${{ github.repository }}:latest
+            lginc/${{ github.repository }}:latest

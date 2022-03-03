@@ -20,20 +20,17 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
-
       - name: cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
-      
       - name: cargo build
         uses: actions-rs/cargo@v1
         with:
           command: build
           use-cross: true
           args: --release --target=${{ matrix.target }}
-
       - uses: actions/upload-artifact@v2
         with:
           name: drone-portainer-${{ matrix.target }}

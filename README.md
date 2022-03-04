@@ -23,8 +23,8 @@ steps:
       - xxx/xxx
       - myhub.com/xx1/xxx
     env:
-      - TZ:Asia/Shanghai
-      - myTag:App
+      - TZ=Asia/Shanghai
+      - myTag=App
     docker_compose: |
       version: "3"
       services:
@@ -52,7 +52,7 @@ steps:
     imagenames: 
       - xxx/xxx
     env:
-      - myTag:App
+      - myTag=App
     docker_compose_path: deploy/docker-compose.yaml
     repo_username:
       from_secret: repo_username

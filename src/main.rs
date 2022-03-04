@@ -21,7 +21,13 @@ fn get_pair_from_env(env: &str) -> Vec<Pair> {
     let mut re = Vec::<Pair>::new();
     if envs.len() > 0 {
         for e in envs {
+            if e.trim() == "" {
+                continue;
+            }
             let ep: Vec<&str> = e.split('=').into_iter().collect();
+            if ep.len() != 2 {
+                panic!("cannot split {} by '='", e);
+            }
             re.push(Pair {
                 name: ep[0].trim().to_string(),
                 value: ep[1].trim().to_string(),
@@ -101,6 +107,15 @@ async fn main() -> Result<(), reqwest::Error> {
         auth_value = format!("Bearer {}", &login_result["jwt"].as_str().unwrap());
     }
 
+    let endpoint_result = client
+        .get(format!("{}/endpoints/{}", &server, &endpoint))
+        .header(auth_name, &auth_value)
+        .send()
+        .await?;
+    if endpoint_result.status() == reqwest::StatusCode::NOT_FOUND {
+        panic!("can not found endpoint id is {} ", endpoint);
+    }
+
     //2. pull image
     if images_str != "" {
         println!("pull images: {}", &images_str);
@@ -119,6 +134,9 @@ async fn main() -> Result<(), reqwest::Error> {
 
         let images: Vec<&str> = images_str.split(',').collect();
         for image in images {
+            if image.trim() == "" {
+                continue;
+            }
             let mut pull_image_header = reqwest::header::HeaderMap::new();
             pull_image_header.insert(auth_name, auth_value.parse().unwrap());
             let registry_name = image.split('/').nth(0).unwrap();
